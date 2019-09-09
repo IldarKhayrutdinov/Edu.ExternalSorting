@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "ExternalSort.Net": {
-      "commandName": "Project",
-      "commandLineArgs": "C:\\Work\\Job\\searchinform.com\\input.txt --regenerate__ --binary_compare"
-    }
-  }
-}
