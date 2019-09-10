@@ -6,7 +6,7 @@ namespace ExternalSort.Net
 {
     internal static class Verifier
     {
-        public static bool Verify(string filePath, Encoding encoding, Func<string, string, int> comparator)
+        public static bool Verify(string filePath, Encoding encoding, Comparison<string> comparator)
         {
             using (var fs = new StreamReader(filePath, encoding))
             {
@@ -15,7 +15,7 @@ namespace ExternalSort.Net
                 while (!fs.EndOfStream)
                 {
                     string line = fs.ReadLine();
-                    if (comparator(last, line) < 0)
+                    if (comparator(last, line) > 0)
                     {
                         return false;
                     }
@@ -28,39 +28,30 @@ namespace ExternalSort.Net
             return true;
         }
 
-        public static bool BinaryCompare(string filePath, string etalonPath)
+        public static bool ReferenceCompare(string filePath, string srcPath, Encoding encoding, Comparison<string> comparator)
         {
-            const int bufLength = 10 * 1024;
-            byte[] buf1 = new byte[bufLength];
-            byte[] buf2 = new byte[bufLength];
+            string[] lines = File.ReadAllLines(filePath, encoding);
+            string[] srcLines = File.ReadAllLines(srcPath, encoding);
 
-            using (var fs1 = new FileStream(filePath, FileMode.Open))
-            using (var fs2 = new FileStream(etalonPath, FileMode.Open))
+            Array.Sort(srcLines, comparator);
+
+            return Compare(lines, srcLines);
+        }
+
+        private static bool Compare<T>(T[] lines, T[] srcLines)
+            where T : IEquatable<T>
+        {
+            if (lines.Length != srcLines.Length)
             {
-                if (fs1.Length != fs2.Length)
+                return false;
+            }
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (!lines[i].Equals(srcLines[i]))
                 {
                     return false;
                 }
-
-                long leftBytes = fs2.Length;
-                do
-                {
-                    int readed1 = fs1.Read(buf1, 0, buf1.Length);
-                    int readed2 = fs2.Read(buf2, 0, buf2.Length);
-
-                    if (readed1 != readed2)
-                    {
-                        return false;
-                    }
-
-                    if (!Array.Equals(buf1, buf2))
-                    {
-                        return false;
-                    }
-
-                    leftBytes -= readed1;
-
-                } while (leftBytes > 0);
             }
 
             return true;

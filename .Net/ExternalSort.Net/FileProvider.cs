@@ -18,7 +18,7 @@ namespace ExternalSort
                 for (int i = 0; i < totalLinesCount; i++)
                 {
                     int lineLength = random.Next(maxLineLength);
-                    char[] buffer = GetRandomLine(charset, lineLength);
+                    char[] buffer = BuildRandomLine(charset, lineLength);
                     fs.WriteLine(buffer);
                 }
             }
@@ -37,7 +37,7 @@ namespace ExternalSort
             }
         }
 
-        private char[] GetRandomLine(char[] charset, int length)
+        private char[] BuildRandomLine(char[] charset, int length)
         {
             return Enumerable.Repeat(charset, length)
               .Select(s => s[random.Next(charset.Length)]).ToArray();

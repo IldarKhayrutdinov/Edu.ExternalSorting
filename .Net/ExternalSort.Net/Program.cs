@@ -12,35 +12,37 @@ namespace ExternalSort.Net
 
         private const int ComparingSymbols = 50;
 
-        private static readonly Encoding DefaultEncoding = Encoding.UTF8; // Encoding.GetEncoding("windows-1251");
+        private static readonly Encoding DefaultEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1251); /* Encoding.GetEncoding("windows-1251"); */
 
         static void Main(string[] args)
         {
-            ParseArgs(args, out string srcFilePath, out bool binaryCompare, out bool regenerate);
+            ParseArgs(args, out string srcFilePath, out bool regenerate, out bool referenceCompare);
+
+            Console.WriteLine("FilePath = " + srcFilePath);
+            Console.WriteLine($"Args: regenerate={regenerate}, referenceCompare={referenceCompare}");
 
             if (regenerate)
             {
                 new FileProvider().Generate(srcFilePath, DefaultEncoding, TotalLinesCount, MaxLineLength);
             }
 
-            string bkFilePath = null;
-            if (binaryCompare)
-            {
-                bkFilePath = srcFilePath + ".bk.txt";
-                File.Copy(srcFilePath, bkFilePath, true);
-            }
+            string outFilePath = srcFilePath + ".out.txt";
+            File.Copy(srcFilePath, outFilePath, true);
 
-            ExternalSorter.Sort(srcFilePath, DefaultEncoding, Comparator);
-            Verifier.Verify(srcFilePath, DefaultEncoding, Comparator);
+            ExternalSorter.Sort(outFilePath, DefaultEncoding, Comparator);
+            Verifier.Verify(outFilePath, DefaultEncoding, Comparator);
 
-            if (binaryCompare)
+            Console.WriteLine("Complete");
+
+            if (referenceCompare)
             {
-                Verifier.BinaryCompare(srcFilePath, bkFilePath);
-                File.Delete(bkFilePath);
+                bool res = Verifier.ReferenceCompare(outFilePath, srcFilePath, DefaultEncoding, Comparator);
+                Console.WriteLine("ReferenceCompare=" + res);
+                //// File.Delete(outFilePath);
             }
         }
 
-        private static void ParseArgs(string[] args, out string srcFilePath, out bool binaryCompare, out bool regenerate)
+        private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool referenceCompare)
         {
             if (args == null || args.Length < 1)
             {
@@ -53,17 +55,17 @@ namespace ExternalSort.Net
                 throw new ArgumentOutOfRangeException();
             }
 
-            binaryCompare = false;
+            referenceCompare = false;
             regenerate = false;
             foreach (var arg in args)
             {
                 switch (arg)
                 {
-                    case "--binary_compare":
-                        binaryCompare = true;
-                        break;
                     case "--regenerate":
                         regenerate = true;
+                        break;
+                    case "--reference_compare":
+                        referenceCompare = true;
                         break;
                 }
             }
