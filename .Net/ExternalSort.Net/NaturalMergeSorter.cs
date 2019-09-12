@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
-namespace ExternalSort
+namespace ExternalSort.Net
 {
-    internal class ExternalSorter
+    /// <summary>
+    /// External natural merge sort algorithm.
+    /// </summary>
+    internal class NaturalMergeSorter
     {
-        public static void Sort(string filePath, Encoding encoding, Comparison<string> comparator)
+        public static void Sort(string filePath, Comparison<string> comparator)
         {
             string tempFile1 = filePath + "__temp1.txt";
             string tempFile2 = filePath + "__temp2.txt";
@@ -15,9 +17,9 @@ namespace ExternalSort
             while (doProcess)
             {
                 // split src file
-                using (var fs = new StreamReader(filePath, encoding))
-                using (var fs1 = new StreamWriter(tempFile1, false, encoding))
-                using (var fs2 = new StreamWriter(tempFile2, false, encoding))
+                using (var fs = new StreamReader(filePath, Config.Encoding))
+                using (var fs1 = new StreamWriter(tempFile1, false, Config.Encoding))
+                using (var fs2 = new StreamWriter(tempFile2, false, Config.Encoding))
                 {
 #if DEBUG
                     fs1.AutoFlush = true;
@@ -34,7 +36,7 @@ namespace ExternalSort
                     {
                         if (comparator(last, line) > 0)
                         {
-                            writer = context.Swith();
+                            writer = context.Switch();
                         }
 
                         writer.WriteLine(line);
@@ -46,10 +48,10 @@ namespace ExternalSort
                     // flush buffer
                     writer.WriteLine(line);
 
-                    // calc doProcess
-                    fs1.Flush();
-                    fs2.Flush();
-                    doProcess = fs1.BaseStream.Length != 0 && fs2.BaseStream.Length != 0;
+                    //// calc doProcess
+                    //fs1.Flush();
+                    //fs2.Flush();
+                    //doProcess = fs1.BaseStream.Length != 0 && fs2.BaseStream.Length != 0;
 
                     // add synthetic end of block markers
                     fs1.WriteLine(string.Empty);
@@ -66,9 +68,9 @@ namespace ExternalSort
                 }
 
                 // merge splitted files
-                using (var fs = new StreamWriter(filePath, false, encoding))
-                using (var fs1 = new StreamReader(tempFile1, encoding))
-                using (var fs2 = new StreamReader(tempFile2, encoding))
+                using (var fs = new StreamWriter(filePath, false, Config.Encoding))
+                using (var fs1 = new StreamReader(tempFile1, Config.Encoding))
+                using (var fs2 = new StreamReader(tempFile2, Config.Encoding))
                 {
 #if DEBUG
                     fs.AutoFlush = true;
@@ -79,8 +81,10 @@ namespace ExternalSort
                     string line1 = reader1.BeginRead();
                     string line2 = reader2.BeginRead();
 
+                    long destBlocksCount = 0;
                     while (!fs1.EndOfStream && !fs2.EndOfStream)
                     {
+                        destBlocksCount++;
                         reader1.BeginBlock();
                         reader2.BeginBlock();
 
@@ -114,12 +118,15 @@ namespace ExternalSort
                         }
                     }
 
+                    bool hasExtBlock = false;
+
                     // flush remained block for file1
                     reader1.BeginBlock();
                     while (!fs1.EndOfStream && !reader1.IsBlockComplete)
                     {
                         fs.WriteLine(line1);
                         line1 = reader1.ReadLine();
+                        hasExtBlock = true;
                     }
 
                     // flush remained block for file2
@@ -128,7 +135,10 @@ namespace ExternalSort
                     {
                         fs.WriteLine(line2);
                         line2 = reader2.ReadLine();
+                        hasExtBlock = true;
                     }
+
+                    doProcess = destBlocksCount > 1 || hasExtBlock;
                 }
             }
         }
@@ -149,7 +159,7 @@ namespace ExternalSort
                 index = 0;
             }
 
-            public StreamWriter Swith()
+            public StreamWriter Switch()
             {
                 index = index == 0 ? 1 : 0;
                 return Writer;
