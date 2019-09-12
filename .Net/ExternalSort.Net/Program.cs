@@ -1,48 +1,39 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace ExternalSort.Net
 {
     class Program
     {
-        private const int TotalLinesCount = 10;
-
-        private const int MaxLineLength = 500;
-
-        private const int ComparingSymbols = 50;
-
-        private static readonly Encoding DefaultEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1251); /* Encoding.GetEncoding("windows-1251"); */
-
         static void Main(string[] args)
         {
-            ParseArgs(args, out string srcFilePath, out bool regenerate, out bool referenceCompare);
+            ParseArgs(args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue);
 
-            Console.WriteLine("FilePath = " + srcFilePath);
-            Console.WriteLine($"Args: regenerate={regenerate}, referenceCompare={referenceCompare}");
+            Console.WriteLine($"FilePath = {srcFilePath}, size = {new FileInfo(srcFilePath).Length}");
+            Console.WriteLine($"Arguments: n = {nWayValue}, regenerate = {regenerate}, debug = {debugMode}\n");
 
             if (regenerate)
             {
-                new FileProvider().Generate(srcFilePath, DefaultEncoding, TotalLinesCount, MaxLineLength);
+                new FileProvider().Generate(srcFilePath);
             }
 
             string outFilePath = srcFilePath + ".out.txt";
             File.Copy(srcFilePath, outFilePath, true);
 
-            ExternalSorter.Sort(outFilePath, DefaultEncoding, Comparator);
-            Verifier.Verify(outFilePath, DefaultEncoding, Comparator);
+            //// NaturalMergeSorter.Sort(outFilePath, Consts.Comparator);
+            var sortedFilePath = new NWayMergeSorter(nWayValue).Sort(srcFilePath);
+            File.Replace(sortedFilePath, outFilePath, null);
 
-            Console.WriteLine("Complete");
+            Console.WriteLine("\nVerify = " + Verifier.Verify(outFilePath));
 
-            if (referenceCompare)
+            if (debugMode)
             {
-                bool res = Verifier.ReferenceCompare(outFilePath, srcFilePath, DefaultEncoding, Comparator);
-                Console.WriteLine("ReferenceCompare=" + res);
-                //// File.Delete(outFilePath);
+                bool res = Verifier.ReferenceCompare(outFilePath, srcFilePath);
+                Console.WriteLine("ReferenceCompare = " + res);
             }
         }
 
-        private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool referenceCompare)
+        private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue)
         {
             if (args == null || args.Length < 1)
             {
@@ -55,25 +46,31 @@ namespace ExternalSort.Net
                 throw new ArgumentOutOfRangeException();
             }
 
-            referenceCompare = false;
+            debugMode = false;
             regenerate = false;
+            nWayValue = Environment.ProcessorCount;
             foreach (var arg in args)
             {
-                switch (arg)
+                var s = arg.Split('=');
+                string key = s[0];
+                switch (key)
                 {
                     case "--regenerate":
                         regenerate = true;
                         break;
-                    case "--reference_compare":
-                        referenceCompare = true;
+                    case "--debug":
+                        debugMode = true;
+                        break;
+                    case "--n":
+                        if (!int.TryParse(s[1], out nWayValue))
+                        {
+                            nWayValue = Environment.ProcessorCount;
+                        }
+
                         break;
                 }
             }
         }
 
-        private static int Comparator(string line1, string line2)
-        {
-            return string.Compare(line1, 0, line2, 0, ComparingSymbols);
-        }
     }
 }

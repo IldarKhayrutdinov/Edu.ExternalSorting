@@ -1,26 +1,23 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 
 namespace ExternalSort.Net
 {
     internal static class Verifier
     {
-        public static bool Verify(string filePath, Encoding encoding, Comparison<string> comparator)
+        public static bool Verify(string filePath)
         {
-            using (var fs = new StreamReader(filePath, encoding))
+            using (var fs = new StreamReader(filePath, Config.Encoding))
             {
                 string last = fs.ReadLine();
-                int lines = 1;
                 while (!fs.EndOfStream)
                 {
                     string line = fs.ReadLine();
-                    if (comparator(last, line) > 0)
+                    if (Config.Comparator(last, line) > 0)
                     {
                         return false;
                     }
 
-                    lines++;
                     last = line;
                 }
             }
@@ -28,12 +25,12 @@ namespace ExternalSort.Net
             return true;
         }
 
-        public static bool ReferenceCompare(string filePath, string srcPath, Encoding encoding, Comparison<string> comparator)
+        public static bool ReferenceCompare(string filePath, string srcPath)
         {
-            string[] lines = File.ReadAllLines(filePath, encoding);
-            string[] srcLines = File.ReadAllLines(srcPath, encoding);
+            string[] lines = File.ReadAllLines(filePath, Config.Encoding);
+            string[] srcLines = File.ReadAllLines(srcPath, Config.Encoding);
 
-            Array.Sort(srcLines, comparator);
+            Array.Sort(srcLines, Config.Comparator);
 
             return Compare(lines, srcLines);
         }

@@ -2,7 +2,7 @@
   "profiles": {
     "ExternalSort.Net": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Work\\Job\\searchinform.com\\input.txt --regenerate_ --reference_compare"
+      "commandLineArgs": "C:\\Work\\Job\\input.txt --n=4 --regenerate_ --debug_"
     }
   }
 }
