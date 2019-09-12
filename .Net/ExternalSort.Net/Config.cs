@@ -29,7 +29,12 @@ namespace ExternalSort.Net
         /// 1251	- ANSI Cyrillic
         /// 1252	- ANSI Latin 1
         ///</remarks>
-        public static readonly Encoding Encoding = CodePagesEncodingProvider.Instance.GetEncoding(1252); /* Encoding.GetEncoding("windows-1252"); */
+        public static readonly Encoding Encoding =
+#if NETCOREAPP2_2
+            CodePagesEncodingProvider.Instance.GetEncoding(1252);
+#else
+            Encoding.GetEncoding("windows-1252");
+#endif
 
         public static readonly IComparer<string> Comparison = new ComparisonComparer<string>(Config.Comparator);
 

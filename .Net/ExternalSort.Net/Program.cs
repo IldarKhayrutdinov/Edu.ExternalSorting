@@ -9,6 +9,7 @@ namespace ExternalSort.Net
         {
             ParseArgs(args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue);
 
+            Console.WriteLine($"Start sorter, CLR version = {Environment.Version}, Date = { DateTime.Now}");
             Console.WriteLine($"FilePath = {srcFilePath}, size = {new FileInfo(srcFilePath).Length}");
             Console.WriteLine($"Arguments: n = {nWayValue}, regenerate = {regenerate}, debug = {debugMode}\n");
 
@@ -31,6 +32,8 @@ namespace ExternalSort.Net
                 bool res = Verifier.ReferenceCompare(outFilePath, srcFilePath);
                 Console.WriteLine("ReferenceCompare = " + res);
             }
+
+            Console.WriteLine();
         }
 
         private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue)
