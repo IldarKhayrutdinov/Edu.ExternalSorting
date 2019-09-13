@@ -2,7 +2,7 @@
   "profiles": {
     "ExternalSort.Net": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Work\\Job\\input.txt --n=4 --regenerate_ --debug_"
+      "commandLineArgs": "C:\\Work\\Job\\input.txt --buffer_size=1048576 --n=6 --debug=false --regenerate=false --generate_file_size=14857060"
     }
   }
 }

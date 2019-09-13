@@ -11,13 +11,13 @@ namespace ExternalSort.Net
 
         private readonly string[][] consumerBuffers;
 
-        public BalancedSplitter(StreamReader source, StreamWriter[] destinations)
+        public BalancedSplitter(StreamReader source, StreamWriter[] destinations, Config config)
         {
             this.source = source;
             this.destinations = destinations;
 
             int consumersCount = destinations.Length;
-            int totalBufferLines = (Config.BufferSizeBytes / Config.MaxLineLength) / consumersCount;
+            int totalBufferLines = (config.BufferSize / config.MaxLineLength) / consumersCount;
             int bufLines = totalBufferLines / consumersCount;
 
             consumerBuffers = new string[consumersCount][];

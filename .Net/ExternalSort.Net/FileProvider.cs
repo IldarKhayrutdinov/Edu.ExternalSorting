@@ -9,14 +9,16 @@ namespace ExternalSort.Net
     {
         private readonly Random random = new Random();
 
-        public void Generate(string filePath)
+        public void Generate(string filePath, Config config)
         {
+            double magicRandomAverageNumber = 0.5;
+            int totalLinesCount = (int)(config.FileSize / config.MaxLineLength / magicRandomAverageNumber);
             var charset = GenerateCharset().ToArray();
             using (var fs = new StreamWriter(filePath, false, Config.Encoding))
             {
-                for (int i = 0; i < Config.TotalLinesCount; i++)
+                for (int i = 0; i < totalLinesCount; i++)
                 {
-                    int lineLength = random.Next(Config.MaxLineLength - Config.MinLineLength) + Config.MinLineLength;
+                    int lineLength = random.Next(config.MaxLineLength - config.MinLineLength) + config.MinLineLength;
                     char[] buffer = BuildRandomLine(charset, lineLength);
                     fs.WriteLine(buffer);
                 }

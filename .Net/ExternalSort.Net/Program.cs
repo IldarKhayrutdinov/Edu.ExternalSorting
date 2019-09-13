@@ -7,22 +7,24 @@ namespace ExternalSort.Net
     {
         static void Main(string[] args)
         {
-            ParseArgs(args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue);
+            ParseArgs(args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue, out Config config);
 
-            Console.WriteLine($"Start sorter, CLR version = {Environment.Version}, Date = { DateTime.Now}");
-            Console.WriteLine($"FilePath = {srcFilePath}, size = {new FileInfo(srcFilePath).Length}");
-            Console.WriteLine($"Arguments: n = {nWayValue}, regenerate = {regenerate}, debug = {debugMode}\n");
-
+            Console.WriteLine($"External sorter {DateTime.Now}");
+            ////Console.WriteLine($"CLR version = {Environment.Version}");
+            Console.WriteLine($"Arguments: buffer size = {config.BufferSize}, N = {nWayValue}, regenerate = {regenerate}, debug = {debugMode}");
+            
             if (regenerate)
             {
-                new FileProvider().Generate(srcFilePath);
+                new FileProvider().Generate(srcFilePath, config);
             }
 
+            Console.WriteLine($"FilePath = {srcFilePath}, size = {new FileInfo(srcFilePath).Length} \n");
+            
             string outFilePath = srcFilePath + ".out.txt";
             File.Copy(srcFilePath, outFilePath, true);
 
             //// NaturalMergeSorter.Sort(outFilePath, Consts.Comparator);
-            var sortedFilePath = new NWayMergeSorter(nWayValue).Sort(srcFilePath);
+            var sortedFilePath = new NWayMergeSorter(nWayValue, config).Sort(srcFilePath);
             File.Replace(sortedFilePath, outFilePath, null);
 
             Console.WriteLine("\nVerify = " + Verifier.Verify(outFilePath));
@@ -36,7 +38,7 @@ namespace ExternalSort.Net
             Console.WriteLine();
         }
 
-        private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue)
+        private static void ParseArgs(string[] args, out string srcFilePath, out bool regenerate, out bool debugMode, out int nWayValue, out Config config)
         {
             if (args == null || args.Length < 1)
             {
@@ -52,6 +54,7 @@ namespace ExternalSort.Net
             debugMode = false;
             regenerate = false;
             nWayValue = Environment.ProcessorCount;
+            config = new Config();
             foreach (var arg in args)
             {
                 var s = arg.Split('=');
@@ -59,15 +62,35 @@ namespace ExternalSort.Net
                 switch (key)
                 {
                     case "--regenerate":
-                        regenerate = true;
+                        regenerate = bool.TryParse(s[1], out bool b) ? b : true;
+
+                        break;
+                    case "--generate_file_size":
+                        if (long.TryParse(s[1], out long fileSize))
+                        {
+                            config.FileSize = fileSize;
+                        }
+
                         break;
                     case "--debug":
-                        debugMode = true;
+                        debugMode  = bool.TryParse(s[1], out bool d) ? d : true;
+
                         break;
                     case "--n":
-                        if (!int.TryParse(s[1], out nWayValue))
+                        if (int.TryParse(s[1], out int n))
                         {
-                            nWayValue = Environment.ProcessorCount;
+                            const int MaxAllowWays = 20;
+                            n = Math.Max(n, 2);
+                            n = Math.Min(n, MaxAllowWays);
+
+                            nWayValue = n;
+                        }
+
+                        break;
+                    case "--buffer_size":
+                        if (int.TryParse(s[1], out int size))
+                        {
+                            config.BufferSize = size;
                         }
 
                         break;

@@ -12,14 +12,17 @@ namespace ExternalSort.Net
     {
         private readonly int nWayValue;
 
-        public NWayMergeSorter(int nWayValue)
+        private readonly Config config;
+
+        public NWayMergeSorter(int nWayValue, Config config)
         {
             this.nWayValue = nWayValue;
+            this.config = config;
         }
 
         public string Sort(string filePath)
         {
-            Console.WriteLine($"N-Way merger start, N = {nWayValue}");
+            Console.WriteLine($"N-Way merge sorter start...\n");
 
             using (var context = new NWayMergerContext(filePath, nWayValue))
             {
@@ -32,14 +35,14 @@ namespace ExternalSort.Net
                 using (var source = new StreamReader(filePath, Config.Encoding))
                 {
                     var destinations = context.CreateWriters();
-                    var splitter = new BalancedSplitter(source, destinations);
+                    var splitter = new BalancedSplitter(source, destinations, config);
                     splitter.Split();
                     context.ReleaseStreams();
 
                     srcLength = destinations.Length;
                     blockLength = splitter.BlockLength;
 
-                    Console.WriteLine($"splitting elapsed = {totalSw.Elapsed}\n");
+                    Console.WriteLine($"splitting elapsed = {totalSw.Elapsed}");
                 }
 
                 // merging
@@ -64,7 +67,7 @@ namespace ExternalSort.Net
                 }
                 while (doWork);
 
-                Console.WriteLine($"\nCompleted, total elapsed = {totalSw.Elapsed}");
+                Console.WriteLine($"\nN-Way merge sorter completed, total elapsed = {totalSw.Elapsed}");
 
                 return context.ClearPaths();
             }

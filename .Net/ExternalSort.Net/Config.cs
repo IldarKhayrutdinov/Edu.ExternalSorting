@@ -4,23 +4,15 @@ using System.Text;
 
 namespace ExternalSort.Net
 {
-    internal static class Config
-    {
-        public const int TotalLinesCount = 1000000; // DefaultTotalLinesCount
+    internal class Config
+    {        
+        public const int DefaultBufferSize = 1024 * 1024;
 
-        public const int MinLineLength = 1;
+        public const long DefaultFileSize = 10L * 1024 * 1024 * 1024;
 
-        public const int MaxLineLength = 50; // DefaultMaxLineLength
+        public const int DefaultMaxLineLength = 500;
 
-        public const int BufferSizeBytes = 1000000; // DefaultBufferSizeBytes
-
-        private const int DefaultTotalLinesCount = 10 * (1024 * 1024 * 1024 / DefaultMaxLineLength);
-
-        private const int DefaultMaxLineLength = 500;
-
-        private const int DefaultBufferSizeBytes = 1024 * 1024;
-
-        private const int ComparingSymbols = 50;
+        public const int ComparingSymbols = 50;
 
         /// <summary>
         /// The text encoding.
@@ -29,14 +21,37 @@ namespace ExternalSort.Net
         /// 1251	- ANSI Cyrillic
         /// 1252	- ANSI Latin 1
         ///</remarks>
-        public static readonly Encoding Encoding =
+        public static Encoding Encoding { get; } =
 #if NETCOREAPP2_2
             CodePagesEncodingProvider.Instance.GetEncoding(1252);
 #else
             Encoding.GetEncoding("windows-1252");
 #endif
 
-        public static readonly IComparer<string> Comparison = new ComparisonComparer<string>(Config.Comparator);
+        public static IComparer<string> Comparison { get; } = new ComparisonComparer<string>(Config.Comparator);
+
+        /// <summary>
+        /// The buffer size in bytes for sorters.
+        /// </summary>
+        public int BufferSize { get; set; } = DefaultBufferSize;
+
+        /// <summary>
+        /// The max file size in bytes.
+        /// </summary>
+        /// <remarks>For test file generator.</remarks>
+        public long FileSize { get; set; } = DefaultFileSize;
+
+        /// <summary>
+        /// The min symbols count in line.
+        /// </summary>
+        /// <remarks>For test file generator.</remarks>
+        public int MinLineLength = 1;
+
+        /// <summary>
+        /// The max symbols count in line.
+        /// </summary>
+        /// <remarks>For test file generator.</remarks>
+        public int MaxLineLength { get; set; } = DefaultMaxLineLength;
 
         public static int Comparator(string line1, string line2)
         {
